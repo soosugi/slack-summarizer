@@ -10,7 +10,8 @@ from slack_sdk import WebClient
 from datetime import datetime, timedelta
 
 import openai
-openai.api_key = str(os.environ.get('OPEN_AI_TOKEN')).strip()
+
+openai.api_key = str(os.environ.get("OPEN_AI_TOKEN")).strip()
 
 # OpenAIのAPIを使って要約を行う
 
@@ -20,26 +21,37 @@ def summarize(text):
         model="gpt-3.5-turbo",
         temperature=0.5,
         messages=[
-            {"role": "system", "content": "チャットログのフォーマットは発言者: 本文\\nになっている。\\nは改行を表しています。これを踏まえて指示に従います"},
-            {"role": "user", "content": f"下記のチャットログを箇条書きで要約してください。。1行ずつの説明ではありません。全体として短く。\n\n{text}"}
-        ]
+            {
+                "role": "system",
+                "content": "チャットログのフォーマットは発言者: 本文\\nになっている。\\nは改行を表しています。これを踏まえて指示に従います",
+            },
+            {
+                "role": "user",
+                "content": f"下記のチャットログを箇条書きで要約してください。。1行ずつの説明ではありません。全体として短く。\n\n{text}",
+            },
+        ],
     )
-    return response["choices"][0]["message"]['content']
+    return response["choices"][0]["message"]["content"]
 
 
 # APIトークンとチャンネルIDを設定する
-TOKEN = str(os.environ.get('SLACK_BOT_TOKEN')).strip()
-CHANNEL_ID = str(os.environ.get('SLACK_POST_CHANNEL_ID')).strip()
+TOKEN = str(os.environ.get("SLACK_BOT_TOKEN")).strip()
+CHANNEL_ID = str(os.environ.get("SLACK_POST_CHANNEL_ID")).strip()
 
 # 取得する期間を計算する
 HOURS_BACK = 25
-JST = pytz.timezone('Asia/Tokyo')
+JST = pytz.timezone("Asia/Tokyo")
 now = datetime.now(JST)
 yesterday = now - timedelta(hours=HOURS_BACK)
-start_time = datetime(yesterday.year, yesterday.month, yesterday.day,
-                      yesterday.hour, yesterday.minute, yesterday.second)
-end_time = datetime(now.year, now.month, now.day,
-                    now.hour, now.minute, now.second)
+start_time = datetime(
+    yesterday.year,
+    yesterday.month,
+    yesterday.day,
+    yesterday.hour,
+    yesterday.minute,
+    yesterday.second,
+)
+end_time = datetime(now.year, now.month, now.day, now.hour, now.minute, now.second)
 
 # Slack APIクライアントを初期化する
 client = WebClient(token=TOKEN)
@@ -47,7 +59,7 @@ client = WebClient(token=TOKEN)
 # ユーザーIDからユーザー名に変換するために、ユーザー情報を取得する
 try:
     users_info = client.users_list()
-    users = users_info['members']
+    users = users_info["members"]
 except SlackApiError as e:
     print("Error : {}".format(e))
     exit(1)
@@ -55,15 +67,29 @@ except SlackApiError as e:
 
 # チャンネルIDからチャンネル名に変換するために、チャンネル情報を取得する
 try:
-    channels_info = client.conversations_list(
+    # channels_info = client.conversations_list(
+    #     types="public_channel",
+    #     exclude_archived=True,
+    #     limit=1000
+    # )
+    channels_info = client.users_conversations(
         types="public_channel",
         exclude_archived=True,
-        limit=1000
+        limit=1000,
+        user=str(os.environ.get("USER_ID")).strip(),
     )
-    channels = [channel for channel in channels_info['channels']
-                if not channel["is_archived"] and channel["is_channel"]]
-    channels = sorted(channels, key=lambda x: int(re.findall(
-        r'\d+', x["name"])[0]) if re.findall(r'\d+', x["name"]) else float('inf'))
+
+    channels = [
+        channel
+        for channel in channels_info["channels"]
+        if not channel["is_archived"] and channel["is_channel"]
+    ]
+    channels = sorted(
+        channels,
+        key=lambda x: int(re.findall(r"\d+", x["name"])[0])
+        if re.findall(r"\d+", x["name"])
+        else float("inf"),
+    )
 except SlackApiError as e:
     print("Error : {}".format(e))
     exit(1)
@@ -77,13 +103,11 @@ def load_messages(channel_id):
         result = client.conversations_history(
             channel=channel_id,
             oldest=start_time.timestamp(),
-            latest=end_time.timestamp()
+            latest=end_time.timestamp(),
         )
     except SlackApiError as e:
-        if e.response['error'] == 'not_in_channel':
-            response = client.conversations_join(
-                channel=channel_id
-            )
+        if e.response["error"] == "not_in_channel":
+            response = client.conversations_join(channel=channel_id)
             if not response["ok"]:
                 raise SlackApiError("conversations_join() failed")
             time.sleep(5)  # チャンネルにjoinした後、少し待つ
@@ -91,7 +115,7 @@ def load_messages(channel_id):
             result = client.conversations_history(
                 channel=channel_id,
                 oldest=start_time.timestamp(),
-                latest=end_time.timestamp()
+                latest=end_time.timestamp(),
             )
         else:
             print("Error : {}".format(e))
@@ -112,20 +136,20 @@ def load_messages(channel_id):
             channel=channel_id,
             oldest=start_time.timestamp(),
             latest=end_time.timestamp(),
-            cursor=result["response_metadata"]["next_cursor"]
+            cursor=result["response_metadata"]["next_cursor"],
         )
         messages.extend(result["messages"])
     for message in messages[::-1]:
         if "bot_id" in message:
             continue
-        if message["text"].strip() == '':
+        if message["text"].strip() == "":
             continue
         # ユーザーIDからユーザー名に変換する
-        user_id = message['user']
+        user_id = message["user"]
         sender_name = None
         for user in users:
-            if user['id'] == user_id:
-                sender_name = user['name']
+            if user["id"] == user_id:
+                sender_name = user["name"]
                 break
         if sender_name is None:
             sender_name = user_id
@@ -139,8 +163,8 @@ def load_messages(channel_id):
             user_id = match[2:-1]
             user_name = None
             for user in users:
-                if user['id'] == user_id:
-                    user_name = user['name']
+                if user["id"] == user_id:
+                    user_name = user["name"]
                     break
             if user_name is None:
                 user_name = user_id
@@ -151,8 +175,8 @@ def load_messages(channel_id):
             channel_id = match[2:-1]
             channel_name = None
             for channel in channels:
-                if channel['id'] == channel_id:
-                    channel_name = channel['name']
+                if channel["id"] == channel_id:
+                    channel_name = channel["name"]
                     break
             if channel_name is None:
                 channel_name = channel_id
@@ -171,10 +195,9 @@ for channel in channels:
         text = summarize(messages)
         result_text.append(f"----\n<#{channel['id']}>\n{text}")
 
-title = (f"{yesterday.strftime('%Y-%m-%d')}のpublic channelの要約")
+title = f"{yesterday.strftime('%Y-%m-%d')}のpublic channelの要約"
 
 response = client.chat_postMessage(
-    channel=CHANNEL_ID,
-    text=title+"\n\n"+"\n\n".join(result_text)
+    channel=CHANNEL_ID, text=title + "\n\n" + "\n\n".join(result_text)
 )
 print("Message posted: ", response["ts"])

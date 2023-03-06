@@ -1,0 +1,46 @@
+{
+  "terminal.integrated.env.windows": {
+    "PATH": "C:\\Python38;C:\\Python38\\Scripts;${env:PATH}",
+    "PYTHONPATH": "${env:PYTHONPATH};${workspaceFolder}\\site-packages;"
+  },
+  "python.analysis.extraPaths": ["./site-packages"],
+  "editor.tabSize": 4,
+  "editor.formatOnSave": true,
+  // importの自動整形
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": true
+  },
+  // フォーマッタ
+  "python.formatting.provider": "black",
+  // 型チェック
+  "python.linting.mypyEnabled": true,
+  "python.analysis.typeCheckingMode": "basic",
+  // コードチェッカ
+  "python.linting.flake8Enabled": true,
+  "yaml.schemas": {
+    "https://d33vqc0rt9ld30.cloudfront.net/latest/gzip/CloudFormationResourceSpecification.json": [
+      "template.yaml"
+    ]
+  },
+  "yaml.customTags": [
+    "!Ref",
+    "!Sub scalar",
+    "!Sub sequence",
+    "!Join sequence",
+    "!FindInMap sequence",
+    "!GetAtt scalar",
+    "!GetAtt sequence",
+    "!Base64 mapping",
+    "!GetAZs",
+    "!Select scalar",
+    "!Select sequence",
+    "!Split sequence",
+    "!ImportValue",
+    "!Condition",
+    "!Equals sequence",
+    "!And",
+    "!If",
+    "!Not",
+    "!Or"
+  ]
+}
