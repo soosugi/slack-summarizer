@@ -4,12 +4,12 @@
 import os
 import re
 import time
-import pytz
-from slack_sdk.errors import SlackApiError
-from slack_sdk import WebClient
 from datetime import datetime, timedelta
 
 import openai
+import pytz
+from slack_sdk import WebClient
+from slack_sdk.errors import SlackApiError
 
 openai.api_key = str(os.environ.get("OPEN_AI_TOKEN")).strip()
 
@@ -192,6 +192,8 @@ result_text = []
 for channel in channels:
     messages = load_messages(channel["id"])
     if messages != None:
+        # Limit: 20 / min.
+        time.sleep(1)
         text = summarize(messages)
         result_text.append(f"----\n<#{channel['id']}>\n{text}")
 
