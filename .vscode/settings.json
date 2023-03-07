@@ -1,4 +1,9 @@
 {
+  "python.linting.enabled": true,
+  "python.linting.pylintPath": "pylint",
+  "python.formatting.provider": "yapf", // or "black" here
+  "python.linting.pylintEnabled": true,
+
   "terminal.integrated.env.windows": {
     "PATH": "C:\\Python38;C:\\Python38\\Scripts;${env:PATH}",
     "PYTHONPATH": "${env:PYTHONPATH};${workspaceFolder}\\site-packages;"
@@ -10,8 +15,6 @@
   "editor.codeActionsOnSave": {
     "source.organizeImports": true
   },
-  // フォーマッタ
-  "python.formatting.provider": "black",
   // 型チェック
   "python.linting.mypyEnabled": true,
   "python.analysis.typeCheckingMode": "basic",
