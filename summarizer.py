@@ -7,6 +7,7 @@ https://github.com/masuidrive/slack-summarizer
 import os
 import re
 import sys
+import time
 from datetime import datetime, timedelta
 
 import openai
@@ -32,7 +33,8 @@ def summarize(text: str, language: str = "Japanese"):
         >>> summarize("Alice: Hi\nBob: Hello\nAlice: How are you?\nBob: I'm doing well, thanks.")
         '- Alice greeted Bob.\n- Bob responded with a greeting.\n- Alice asked how Bob was doing.\n- Bob replied that he was doing well.'
     """
-    response = openai.ChatCompletion.create(
+
+    response = retry(lambda: openai.ChatCompletion.create(
         model=CHAT_MODEL,
         temperature=TEMPERATURE,
         messages=[{
@@ -56,9 +58,10 @@ def summarize(text: str, language: str = "Japanese"):
                 "With make it easier to read."
                 f"Write in {language}.", "", text
             ])
-        }])
+        }]))
 
     if DEBUG:
+        print('summarize.res=')
         print(response["choices"][0]["message"]['content'])
     return response["choices"][0]["message"]['content']
 
@@ -182,7 +185,7 @@ def runner():
     result_text = []
     for channel in slack_client.channels:
         if DEBUG:
-            print(channel["name"])
+            print(f'channel={channel["name"]}')
         messages = slack_client.load_messages(channel["id"], start_time,
                                               end_time)
         if messages is None:
@@ -199,7 +202,8 @@ def runner():
     title = (f"{start_time.strftime('%Y-%m-%d')} public channels summary\n\n")
 
     if DEBUG:
-        print("\n".join(result_text))
+        result_text2 = "\n".join(result_text)
+        print(f'result_text2={result_text2}')
     else:
         retry(lambda: slack_client.postSummary(title + "\n".join(result_text)),
               exception=SlackApiError)
