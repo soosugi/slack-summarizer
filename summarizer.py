@@ -122,7 +122,7 @@ def estimate_openai_chat_token_count(text: str) -> int:
     return sum(map(counter, matches))
 
 
-def split_messages_by_token_count(messages: list[str]) -> list[list[str]]:
+def split_messages_by_token_count(messages: any) -> any:
     """
     Split a list of strings into sublists with a maximum token count.
 
