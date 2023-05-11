@@ -86,6 +86,8 @@ def get_time_range():
                           yesterday.hour, yesterday.minute, yesterday.second)
     end_time = datetime(now.year, now.month, now.day, now.hour, now.minute,
                         now.second)
+    print(f'start_time={start_time}')
+    print(f'end_time={end_time}')
     return start_time, end_time
 
 
