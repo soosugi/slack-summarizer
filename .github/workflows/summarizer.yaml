@@ -24,3 +24,5 @@ jobs:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           SLACK_POST_CHANNEL_ID: ${{ secrets.SLACK_POST_CHANNEL_ID }}
           USER_ID: ${{ secrets.USER_ID }}
+          TIMEZONE: "Asia/Tokyo"
+          TZ: "Asia/Tokyo"
